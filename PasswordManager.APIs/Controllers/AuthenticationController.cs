@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using PasswordManager.APIs.Models.Authentication;
 using PasswordManager.Services.AuthToken;
 using PasswordManager.Services.AuthToken.Dto;
+using PasswordManager.Services.Users;
+using PasswordManager.Services.Users.Dto;
 
 namespace PasswordManager.APIs.Controllers
 {   
@@ -11,27 +13,76 @@ namespace PasswordManager.APIs.Controllers
     public class AuthenticationController : ControllerBase
     {
         private readonly IAuthTokenService _tokenService;
+        private readonly IUsersService _usersService;
 
-        public AuthenticationController(IAuthTokenService tokenService)
+        public AuthenticationController(IAuthTokenService tokenService, IUsersService usersService)
         {
             _tokenService = tokenService;
+            _usersService = usersService;
         }
 
-        [Route("signin")]
+        [Route("signup")]
         [HttpPost]
-        public ActionResult SignIn([FromBody] UserSignInModel model)
+        public async Task<ActionResult<UserCreatedModel>> SignUp([FromBody] UserSignInModel model)
         {
-            return Ok();
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            int id;
+            try
+            {
+                id = await _usersService.CreateUser(new CreateUserDto
+                {
+                    FirstName = model.FirstName,
+                    LastName = model.LastName,
+                    Email = model.Email,
+                    Password = model.Password
+                });
+            }
+            catch (Exception ex)
+            {
+                return NotFound(ex.Message);
+            }
+
+            return Ok(new UserCreatedModel
+            {
+                Id = id,
+                FullName = $"{model.FirstName} {model.LastName}",
+                Email = model.Email
+            });
         }
 
         [Route("login")]
         [HttpPost]
-        public ActionResult Login()
+        public ActionResult Login([FromBody] UserLoginModel user)
         {
-            var user = new UserAuthDto() { Id = 0, FullName = "Test" };
-            _tokenService.GenerateToken(user);
+            var validUser = _usersService.ValidateUser(new ValidateUserDto
+            {
+                Email = user.Email,
+                Password = user.Password
+            });
 
-            return Ok(user);
+            if (!validUser)
+                return BadRequest(new { Error = "Bad credentials" });
+
+            var userInfo = _usersService.GetLoginInfo(user.Email);
+
+            var authInfo = new UserAuthDto
+            {
+                Id = userInfo.Id,
+                FullName = userInfo.FullName
+            };
+
+            _tokenService.GenerateToken(authInfo);
+
+            return Ok(new UserAuthModel
+            {
+                Id = authInfo.Id,
+                FullName = authInfo.FullName,
+                Token = authInfo.Token
+            });
         }
     }
 }
