@@ -1,7 +1,11 @@
-﻿namespace PasswordManager.Services.Users
+﻿using PasswordManager.Services.Users.Dto;
+
+namespace PasswordManager.Services.Users
 {
     public interface IUsersService
     {
-        void Test();
+        UserLoginInfoDto GetLoginInfo(string email);
+        bool ValidateUser(ValidateUserDto user);
+        Task<int> CreateUser(CreateUserDto user);
     }
 }

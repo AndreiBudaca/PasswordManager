@@ -7,6 +7,7 @@ using PasswordManager.Data;
 using PasswordManager.Data.Options;
 using PasswordManager.Services.AuthToken;
 using PasswordManager.Services.Options;
+using PasswordManager.Services.Password;
 using PasswordManager.Services.Users;
 using System.Text;
 
@@ -27,6 +28,7 @@ namespace PasswordManager.APIs
             // Add services to the container.
             builder.Services.AddScoped<IAuthTokenService, AuthTokenService>();
             builder.Services.AddScoped<IUsersService, UsersService>();
+            builder.Services.AddScoped<IPasswordGeneratorService, PasswordGeneratorService>();
 
             // Add db context to the container
             builder.Services.AddDbContext<PasswordManagerDbContext>(dbBuilder =>

@@ -1,5 +1,8 @@
-﻿namespace PasswordManager.Data.Entities
+﻿using Microsoft.EntityFrameworkCore;
+
+namespace PasswordManager.Data.Entities
 {
+    [Index(nameof(Email), IsUnique = true)]
     public class User
     {
         public int Id { get; set; } = 0;
